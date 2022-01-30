@@ -1,0 +1,186 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Card Drop</title>
+    <script>
+      CARDSIM = {};
+      CARDSIM.simulation = function (nombreDeCard, droprate,nbrmonstres,bubble) {
+          if (nombreDeCard == null || isNaN(parseInt(nombreDeCard)))
+              nombreDeCard = 100;
+          if (droprate == null || isNaN(parseFloat(droprate)))
+              droprate = 0.1;
+          let realdroprate = droprate / 100;
+	  console.log("bubble vaut : " + bubble);
+          function dropcard() {
+              let value = Math.random();
+              let tries = 1;
+
+              while (value > realdroprate) {
+		  if(bubble){
+		      value = Math.random();
+		      if(value <= realdroprate) {
+			  return tries;
+		      }
+		  }
+                  tries++;
+                  value = Math.random();
+              }
+
+              return tries;
+          }
+
+
+          let moyenne = 0;
+          let total=0;
+          let min = Infinity;
+          let max = -Infinity;
+          let cards = nombreDeCard;
+          let a = [];
+          let mediane = 0;
+          let val="";
+
+          for (let i = 0; i < cards; ++i) {
+              a[i] = dropcard();
+
+              if (a[i] < min)
+                  min = a[i];
+              if (a[i] > max)
+                  max = a[i];
+          }
+          a.sort(function (a, b) {
+              return a < b?-1:1
+          });
+          for (let i = 0; i < a.length; ++i) {
+              val +="|"+ i+" : "+a[i]+" ";
+              total += a[i];
+          }
+          console.log(val);
+          moyenne = total/cards;
+          if (a.length%2===0){
+              mediane = (a[a.length/2-1]+a[a.length/2])/2;
+          }
+          else
+              mediane = a[(a.length - 1)/ 2];
+
+          return "Drop chance : " + realdroprate * 100 + "%" + "\n" +
+              "- Simulation stopped after getting "+cards+" items - \n" +
+              "Total number of monsters killed : " + total + "\n" +
+              "Average for 1 item: " + moyenne + "\n" +
+              "Median: " + mediane + '\n' +
+              "min: " + min + "\n" +
+              "max: " + max + "\n";
+
+      };
+      CARDSIM.statistiques = function (droprate,mobTues,bubble) {
+          if (droprate == null || isNaN(parseFloat(droprate)))
+              droprate = 0.1;
+	  if (mobTues == null || isNaN(parseFloat(mobTues)))
+              mobTues = 100;
+
+
+          let realdroprate = droprate / 100;
+
+
+	  var	    binomialP=0.05;
+	  var chanceDavoirAuMoinsUneCarte;
+	  var numberToBeFavorable;
+	  if(bubble)	    {
+	      chanceDavoirAuMoinsUneCarte=1-Math.pow(Math.pow(1-realdroprate,2),mobTues);
+	      numberToBeFavorable=Math.log(binomialP)/Math.log(Math.pow(1-realdroprate,2));
+	  }
+	  else{
+	      chanceDavoirAuMoinsUneCarte=1-Math.pow(1-realdroprate,mobTues);
+	      numberToBeFavorable=Math.log(binomialP)/Math.log(1-realdroprate);
+	  }
+	  
+
+
+          return "After " + mobTues +" monsters, there is " + Math.round(chanceDavoirAuMoinsUneCarte*10000)/100+"% chance to obtain at least one item.\n" +
+          "Pour 95% de chance : " + Math.ceil(numberToBeFavorable) + " monstres.\n";
+	  
+
+
+      };
+
+
+
+      window.onload = function () {
+          let droprates = document.createElement("input");
+          droprates.type = "text";
+	  droprates.value="0.1";
+
+	  let bubble = document.createElement("input");
+          bubble.type = "checkbox";
+	  bubble.checked="true";
+
+          let nombreCartes = document.createElement("input");
+          nombreCartes.type = "text";
+	  nombreCartes.value = "100";
+
+	  let nombreMonstres = document.createElement("input");
+          nombreMonstres.type = "text";
+	  nombreMonstres.value = "100";
+	  
+          let lancerSim = document.createElement("button");
+          let pre = document.createElement("pre");
+	  let pre2 = document.createElement("pre");
+
+          let div = document.createElement("div");
+          let div2 = document.createElement("div");
+	  let div3 = document.createElement("div");
+          div.innerHTML += "Drop % : ";
+          div.appendChild(droprates);
+	  div.appendChild(bubble);
+	  bubblet=document.createElement("span")
+	  bubblet.innerHTML="bubble?";
+ 	  div.appendChild(bubblet);
+          div2.innerHTML += "Part 1 : Simulation <br> Number of items to be dropped before stopping simulation : ";
+
+          div2.appendChild(nombreCartes);
+
+	  div3.innerHTML += "Part 2 : Statistics <br> Number of killed mobs without getting an item : ";
+
+          div3.appendChild(nombreMonstres);
+
+	  
+	  let resultatSimulation=document.createElement("div");
+	  resultatSimulation.style.border="solid black 1px";
+	  resultatSimulation.style.padding="5px";
+	  resultatSimulation.style.margin="5px";
+	  
+	  let resultatStatistiques=document.createElement("div");
+	  resultatStatistiques.style.border="solid black 1px";
+	  resultatStatistiques.style.padding="5px";
+	  resultatStatistiques.style.margin="5px";
+
+          document.body.appendChild(div);
+	  resultatSimulation.appendChild(div2);
+	  resultatSimulation.appendChild(pre);
+          document.body.appendChild(resultatSimulation);
+	  resultatStatistiques.appendChild(div3);
+	  resultatStatistiques.appendChild(pre2);
+          document.body.appendChild(resultatStatistiques);
+	  
+          lancerSim.innerHTML = "Simulation";
+          lancerSim.style.width = "150px";
+          lancerSim.style.height = "40px";
+          document.body.appendChild(lancerSim);
+
+
+
+          lancerSim.onclick = function () {
+	      console.log(droprates.value);
+              pre.innerHTML = CARDSIM.simulation(nombreCartes.value, droprates.value,nombreMonstres.value,bubble.checked);
+	      pre2.innerHTML = CARDSIM.statistiques(droprates.value,nombreMonstres.value,bubble.checked);
+          }
+
+      };
+
+    </script>
+  <script async src='/cdn-cgi/bm/cv/669835187/api.js'></script></head>
+  <body>
+
+  <script type="text/javascript">(function(){window['__CF$cv$params']={r:'6d5e0c137de4ede3',m:'5kBrUBoip.Be4DY.lqBHYADeCr0p8PMBV5xUCI4Qrks-1643580803-0-ARmcDfQORXweJD5gXleJch95sTmR7bZuyTOKSaw7q/Fanyga5bf1+D5BrF7prnlTJ/5QkcNa55n72te+2CnyNuP+nWcia0rnTXdm5icLGvm/r3X8AdeNCnweAgV4IQbvnzDvfK8Eu6PiDNFxOd+4Xy3mGH4CRBRu9oKxL8Ck96FM5xo5wXxjIlCj0Xq4UgR8IqzlVOyRtto5a+oFktDkuuw=',s:[0x8d5e80587d,0x739c7a1177],}})();</script></body>
+</html>
+
